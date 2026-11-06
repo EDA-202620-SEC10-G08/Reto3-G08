@@ -1,21 +1,36 @@
 import time
+from DataStructures.List import array_list as al
+from DataStructures.Map import map_linear_probing as mlp
+import csv
+import os
+
+
 
 def new_logic():
     """
     Crea el catalogo para almacenar las estructuras de datos
     """
     #TODO: Llama a las funciónes de creación de las estructuras de datos
-    pass
+    return {"lista_ventas": al.new_list(),
+            "mapa_canales": mlp.new_map(2,0.5)
+    }
 
 
 # Funciones para la carga de datos
+
+csv.field_size_limit(2147483647)
+data_dir = os.path.dirname(os.path.realpath('__file__')) + '/Data/'
 
 def load_data(catalog, filename):
     """
     Carga los datos del reto
     """
     # TODO: Realizar la carga de datos
-    pass
+    
+    archivo = data_dir + filename
+    input_file = csv.DictReader(open(archivo, encoding="utf-8"))
+    for venta in input_file
+    
 
 # Funciones de consulta sobre el catálogo
 
