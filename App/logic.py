@@ -29,7 +29,18 @@ def load_data(catalog, filename):
     
     archivo = data_dir + filename
     input_file = csv.DictReader(open(archivo, encoding="utf-8"))
-    for venta in input_file
+    for venta in input_file:
+        venta["base_price_usd"] = int(venta["base_price_usd"])
+        venta["discount_percent"] = int(venta["discount_percent"])
+        venta["final_price_usd"] = float(venta["final_price_usd"])
+        venta["units_sold"] = int(venta["units_sold"])
+        venta["revenue_usd"] = float(venta["revenue_usd"])
+        venta["customer_rating"] = float(venta["customer_rating"])
+        venta["size"] = int(venta["size"])
+        al.add_last(catalog["lista_ventas"], venta)
+        
+    return catalog
+        
     
 
 # Funciones de consulta sobre el catálogo
