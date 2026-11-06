@@ -1,6 +1,7 @@
 import time
 from DataStructures.List import array_list as al
 from DataStructures.Map import map_linear_probing as mlp
+from DataStructures.Tree import red_black_tree as rbt
 import csv
 import os
 
@@ -12,7 +13,8 @@ def new_logic():
     """
     #TODO: Llama a las funciónes de creación de las estructuras de datos
     return {"lista_ventas": al.new_list(),
-            "mapa_canales": mlp.new_map(2,0.5)
+            "mapa_canales": mlp.new_map(2,0.5),
+            "indice_marcas": mlp.new_map(10, 0.5)
     }
 
 
@@ -38,6 +40,7 @@ def load_data(catalog, filename):
         venta["customer_rating"] = float(venta["customer_rating"])
         venta["size"] = int(venta["size"])
         al.add_last(catalog["lista_ventas"], venta)
+        indexar_venta_por_marca(catalog, venta)
         
     return catalog
         
@@ -46,12 +49,43 @@ def load_data(catalog, filename):
 # Funciones de consulta sobre el catálogo
 
 
-def req_1(catalog):
+def indexar_venta_por_marca(catalog, venta):
     """
-    Retorna el resultado del requerimiento 1
+    REQ 1: Inserta la venta en el RBT de su marca. La llave es la tupla
+    (discount_percent, order_date, order_id): el recorrido en orden del arbol
+    entrega descuento ascendente y, en empate, fecha ascendente. El order_id
+    hace la llave unica para que ninguna venta se sobrescriba.
     """
-    # TODO: Modificar el requerimiento 1
-    pass
+    arbol = mlp.get(catalog["indice_marcas"], venta["brand"])
+    if arbol is None:
+        arbol = rbt.new_map()
+        mlp.put(catalog["indice_marcas"], venta["brand"], arbol)
+    llave = (venta["discount_percent"], venta["order_date"], venta["order_id"])
+    rbt.put(arbol, llave, venta)
+
+
+def req_1(catalog, marca, desc_min, desc_max):
+    """
+    Retorna el resultado del requerimiento 1: ordenes de una marca con
+    descuento en [desc_min, desc_max] (limites incluidos).
+    Retorna (tiempo_ms, total_ordenes, costo_total, lista_ordenada)
+    """
+    inicio = get_time()
+    resultado = al.new_list()
+    total_costo = 0.0
+    arbol = mlp.get(catalog["indice_marcas"], marca)
+    if arbol is not None:
+        ordenes = rbt.values(arbol,
+                             (desc_min, "0000-00-00", ""),
+                             (desc_max, "9999-99-99", "~"))
+        nodo = ordenes["first"]
+        while nodo is not None:
+            venta = nodo["info"]
+            al.add_last(resultado, venta)
+            total_costo += venta["final_price_usd"]
+            nodo = nodo["next"]
+    fin = get_time()
+    return delta_time(inicio, fin), al.size(resultado), total_costo, resultado
 
 
 def req_2(catalog):
