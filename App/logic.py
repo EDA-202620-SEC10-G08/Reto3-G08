@@ -1,5 +1,6 @@
 import time
 from DataStructures.List import array_list as al
+from DataStructures.List import single_linked_list as sll
 from DataStructures.Map import map_linear_probing as mlp
 from DataStructures.Tree import red_black_tree as rbt
 import csv
@@ -96,12 +97,47 @@ def req_2(catalog):
     pass
 
 
-def req_3(catalog):
+def req_3(catalog, canal_venta, categoria, precio_min, precio_max):
     """
     Retorna el resultado del requerimiento 3
     """
-    # TODO: Modificar el requerimiento 3
-    pass
+    tiempo_inicial = get_time()
+    
+    arbol_precios = rbt.new_map()
+    suma_total = 0
+    suma_num_pedidos = 0
+    
+    lista_ventas = catalog["lista_ventas"]
+    for i in range(al.size(lista_ventas)):
+        venta = al.get_element(lista_ventas, i)
+        if venta["sales_channel"] == canal_venta and venta["category"] == categoria and venta["final_price_usd"] >= precio_min and venta["final_price_usd"] <= precio_max:
+            suma_total += venta["final_price_usd"]
+            suma_num_pedidos += 1
+            llave = (venta["final_price_usd"], venta["order_date"], venta["order_id"])
+            rbt.put(arbol_precios, llave, venta)
+    
+    lista_ordenada = rbt.value_set(arbol_precios)
+    if sll.size(lista_ordenada) > 10:
+        primeros_5 = sll.sub_list(lista_ordenada, 0, 5)
+        ultimos_5 = sll.sub_list(lista_ordenada, sll.size(lista_ordenada)-5, 5)
+        
+    else:
+        primeros_5 = lista_ordenada
+        ultimos_5 = sll.new_list()
+    
+    tiempo_final = get_time()
+    
+    diferencia_tiempo = delta_time(tiempo_inicial, tiempo_final)
+
+    
+    return {
+        "tiempo":          diferencia_tiempo,
+        "total_num_pedidos":   suma_num_pedidos,
+        "costo_total":    round(suma_total, 2),
+        "primeros_5":        primeros_5,
+        "ultimos_5":         ultimos_5,
+    }
+
 
 
 def req_4(catalog):

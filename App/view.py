@@ -1,5 +1,6 @@
 import sys
 from App import logic
+from DataStructures.List import single_linked_list as sll
 
 
 def new_logic():
@@ -102,13 +103,33 @@ def print_req_2(control):
     # TODO: Imprimir el resultado del requerimiento 2
     pass
 
+def imprimir_pedido_req_3(pedido):
+    print(pedido["order_id"], pedido["order_date"], pedido["brand"], pedido["model_name"],
+          pedido["category"], pedido["sales_channel"], pedido["country"], pedido["final_price_usd"], pedido["units_sold"])
+
 
 def print_req_3(control):
     """
         Función que imprime la solución del Requerimiento 3 en consola
     """
-    # TODO: Imprimir el resultado del requerimiento 3
-    pass
+    canal_venta = input("Indique canal de venta: ").strip()
+    categoria = input("Indique categoría de venta: ").strip()
+    precio_min = float(input("Indique precio min: "))
+    precio_max = float(input("Indique precio max: "))
+    resultado = logic.req_3(control, canal_venta, categoria, precio_min, precio_max)
+    
+    print("Tiempo de ejecución: ", resultado["tiempo"], "ms")
+    print("Número total de órdenes que cumplen el filtro: ", resultado["total_num_pedidos"])
+    print("Costo total de pedidos: ", resultado["costo_total"])
+    
+    print("Pedidos:")
+    for i in range(sll.size(resultado["primeros_5"])):
+        imprimir_pedido_req_3(sll.get_element(resultado["primeros_5"], i))
+    if sll.size(resultado["ultimos_5"]) > 0:
+        for i in range(sll.size(resultado["ultimos_5"])):
+            imprimir_pedido_req_3(sll.get_element(resultado["ultimos_5"], i))
+
+
 
 
 def print_req_4(control):
@@ -165,7 +186,7 @@ def main():
         elif int(inputs) == 5:
             print_req_5(control)
 
-        elif int(inputs) == 5:
+        elif int(inputs) == 6:
             print_req_6(control)
 
         elif int(inputs) == 7:
