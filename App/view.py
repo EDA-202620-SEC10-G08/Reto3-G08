@@ -126,34 +126,39 @@ def print_req_2(control):
         imprimir_tabla(["order_id", "Fecha", "Marca", "Modelo", "País", "Canal",
                         "Calificación", "Precio final USD", "Ingresos USD"], filas)
 
-def imprimir_pedido_req_3(pedido):
-    print(pedido["order_id"], pedido["order_date"], pedido["brand"], pedido["model_name"],
-          pedido["category"], pedido["sales_channel"], pedido["country"], pedido["final_price_usd"], pedido["units_sold"])
-
-
 def print_req_3(control):
     """
         Función que imprime la solución del Requerimiento 3 en consola
     """
     canal_venta = input("Indique canal de venta: ").strip()
-    categoria = input("Indique categoría de venta: ").strip()
-    precio_min = float(input("Indique precio min: "))
-    precio_max = float(input("Indique precio max: "))
+    categoria = input("Indique categoría: ").strip()
+    precio_min = float(input("Indique precio mínimo: "))
+    precio_max = float(input("Indique precio máximo: "))
+
     resultado = logic.req_3(control, canal_venta, categoria, precio_min, precio_max)
-    
-    print("Tiempo de ejecución: ", resultado["tiempo"], "ms")
-    print("Número total de órdenes que cumplen el filtro: ", resultado["total_num_pedidos"])
-    print("Costo total de pedidos: ", resultado["costo_total"])
-    
-    print("Pedidos:")
-    for i in range(sll.size(resultado["primeros_5"])):
-        imprimir_pedido_req_3(sll.get_element(resultado["primeros_5"], i))
-    if sll.size(resultado["ultimos_5"]) > 0:
-        for i in range(sll.size(resultado["ultimos_5"])):
-            imprimir_pedido_req_3(sll.get_element(resultado["ultimos_5"], i))
 
+    print("Tiempo de ejecución:", round(resultado["tiempo"], 2))
+    print("Número total de órdenes:", resultado["total_num_pedidos"])
+    print("Costo total final:", resultado["costo_total"])
 
+    if resultado["total_num_pedidos"] == 0:
+        print("No hay órdenes que cumplan el filtro.")
+        return
 
+    if resultado["total_num_pedidos"] > 10:
+        print("Mostrando las primeras 5 y las últimas 5 órdenes:")
+
+    filas = []
+    for nombre in ["primeros_5", "ultimos_5"]:
+        lista = resultado[nombre]
+        for i in range(sll.size(lista)):
+            p = sll.get_element(lista, i)
+            filas.append([p["order_id"], p["order_date"], p["brand"],
+                          p["model_name"], p["category"], p["sales_channel"],
+                          p["country"], p["final_price_usd"], p["units_sold"]])
+
+    imprimir_tabla(["order_id", "Fecha", "Marca", "Modelo", "Categoría",
+                    "Canal", "País", "Precio final USD", "Unidades"], filas)
 
 def print_req_4(control):
     """
