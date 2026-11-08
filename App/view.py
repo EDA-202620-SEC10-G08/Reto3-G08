@@ -1,6 +1,7 @@
 import sys
 from App import logic
 from DataStructures.List import single_linked_list as sll
+from DataStructures.List import array_list as al
 
 
 def new_logic():
@@ -100,8 +101,30 @@ def print_req_2(control):
     """
         Función que imprime la solución del Requerimiento 2 en consola
     """
-    # TODO: Imprimir el resultado del requerimiento 2
-    pass
+    pais = input("País a analizar (ej: USA): ").strip()
+    calif_min = float(input("Calificación mínima (ej: 3.5): "))
+    calif_max = float(input("Calificación máxima (ej: 5.0): "))
+    resultado = logic.req_2(control, pais, calif_min, calif_max)
+
+    print("\nTiempo de ejecución (ms):", round(resultado["tiempo"], 2))
+    print("Número total de órdenes:", resultado["total_num_pedidos"])
+    print("Costo total final (USD):", resultado["costo_total"])
+
+    if resultado["total_num_pedidos"] == 0:
+        print("No hay órdenes que cumplan el filtro.")
+    else:
+        if resultado["total_num_pedidos"] > 10:
+            print("Mostrando las primeras 5 y las últimas 5 órdenes:")
+        filas = []
+        for lista in (resultado["primeros_5"], resultado["ultimos_5"]):
+            for i in range(sll.size(lista)):
+                v = sll.get_element(lista, i)
+                filas.append([v["order_id"], v["order_date"], v["brand"],
+                              v["model_name"], v["country"], v["sales_channel"],
+                              v["customer_rating"], v["final_price_usd"],
+                              v["revenue_usd"]])
+        imprimir_tabla(["order_id", "Fecha", "Marca", "Modelo", "País", "Canal",
+                        "Calificación", "Precio final USD", "Ingresos USD"], filas)
 
 def imprimir_pedido_req_3(pedido):
     print(pedido["order_id"], pedido["order_date"], pedido["brand"], pedido["model_name"],
@@ -144,16 +167,73 @@ def print_req_5(control):
     """
         Función que imprime la solución del Requerimiento 5 en consola
     """
-    # TODO: Imprimir el resultado del requerimiento 5
-    pass
+    pais = input("País a analizar (ej: Germany): ").strip()
+    fecha_ini = input("Fecha inicial AAAA-MM-DD (ej: 2021-01-01): ").strip()
+    fecha_fin = input("Fecha final AAAA-MM-DD (ej: 2023-12-31): ").strip()
+    n = int(input("Cantidad N de marcas (ej: 5): "))
+    resultado = logic.req_5(control, pais, fecha_ini, fecha_fin, n)
+
+    print("\nTiempo de ejecución (ms):", round(resultado["tiempo"], 2))
+    print("Número total de marcas consideradas:", resultado["total_marcas"])
+
+    if resultado["total_marcas"] == 0:
+        print("No hay órdenes que cumplan el filtro.")
+    else:
+        filas_marcas = []
+        filas_ordenes = []
+        for i in range(al.size(resultado["marcas"])):
+            m = al.get_element(resultado["marcas"], i)
+            o = m["mayor_orden"]
+            filas_marcas.append([m["marca"], m["total"],
+                                 round(m["rating_promedio"], 3),
+                                 round(m["revenue_promedio"], 2)])
+            filas_ordenes.append([m["marca"], o["order_id"], o["order_date"],
+                                  o["brand"] + " " + o["model_name"],
+                                  o["country"], o["sales_channel"],
+                                  o["units_sold"], o["customer_rating"]])
+        print("\nMarcas con mejor calificación promedio:")
+        imprimir_tabla(["Marca", "Órdenes", "Calificación promedio",
+                        "Ingreso promedio USD"], filas_marcas)
+        print("\nOrden con más unidades vendidas de cada marca:")
+        imprimir_tabla(["Marca", "order_id", "Fecha", "Marca y modelo", "País",
+                        "Canal", "Unidades", "Calificación"], filas_ordenes)
 
 
 def print_req_6(control):
     """
         Función que imprime la solución del Requerimiento 6 en consola
     """
-    # TODO: Imprimir el resultado del requerimiento 6
-    pass
+    fecha_ini = input("Fecha inicial AAAA-MM-DD (ej: 2021-01-01): ").strip()
+    fecha_fin = input("Fecha final AAAA-MM-DD (ej: 2023-12-31): ").strip()
+    precio_min = float(input("Precio base mínimo (ej: 50.0): "))
+    precio_max = float(input("Precio base máximo (ej: 200.0): "))
+    n = int(input("Cantidad N de marcas (ej: 5): "))
+    resultado = logic.req_6(control, fecha_ini, fecha_fin, precio_min, precio_max, n)
+
+    print("\nTiempo de ejecución (ms):", round(resultado["tiempo"], 2))
+    print("Número total de marcas en el filtro:", resultado["marcas_en_filtro"])
+
+    if resultado["total_marcas"] == 0:
+        print("No hay órdenes que cumplan el filtro.")
+    else:
+        filas_marcas = []
+        filas_ordenes = []
+        for i in range(al.size(resultado["marcas"])):
+            m = al.get_element(resultado["marcas"], i)
+            o = m["orden_cercana"]
+            filas_marcas.append([m["marca"], m["total"],
+                                 round(m["descuento_promedio"], 3),
+                                 round(m["desviacion"], 3)])
+            filas_ordenes.append([m["marca"], o["order_id"], o["order_date"],
+                                  o["brand"] + " " + o["model_name"],
+                                  o["country"], o["sales_channel"],
+                                  o["discount_percent"]])
+        print("\nMarcas más consistentes en descuentos:")
+        imprimir_tabla(["Marca", "Órdenes", "Descuento promedio %",
+                        "Desviación estándar"], filas_marcas)
+        print("\nOrden con el descuento más cercano al promedio de cada marca:")
+        imprimir_tabla(["Marca", "order_id", "Fecha", "Marca y modelo", "País",
+                        "Canal", "Descuento %"], filas_ordenes)
 
 # Se crea la lógica asociado a la vista
 control = new_logic()
