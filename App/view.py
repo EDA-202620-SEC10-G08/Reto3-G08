@@ -38,6 +38,26 @@ def load_data(control):
     fin = logic.get_time()
     print("Tiempo de carga (ms):", round(logic.delta_time(inicio, fin), 2))
     print("Total de registros cargados:", control["lista_ventas"]["size"])
+    resumen = logic.resumen_carga(control)
+    columnas = ["order_id", "Fecha", "Marca", "Modelo", "Categoría",
+                "Precio final USD", "Unidades", "Ingreso USD", "País", "Canal"]
+    for titulo, v in [("Venta con menor precio final", resumen["menor"]),
+                      ("Venta con mayor precio final", resumen["mayor"])]:
+        print("\n" + titulo + ":")
+        imprimir_tabla(["order_id", "Marca", "Modelo", "Categoría",
+                        "Precio final USD", "País"],
+                       [[v["order_id"], v["brand"], v["model_name"], v["category"],
+                         v["final_price_usd"], v["country"]]])
+    for titulo, lista in [("Primeros 5 registros cargados", resumen["primeros_5"]),
+                          ("Últimos 5 registros cargados", resumen["ultimos_5"])]:
+        filas = []
+        for i in range(al.size(lista)):
+            v = al.get_element(lista, i)
+            filas.append([v["order_id"], v["order_date"], v["brand"], v["model_name"],
+                          v["category"], v["final_price_usd"], v["units_sold"],
+                          v["revenue_usd"], v["country"], v["sales_channel"]])
+        print("\n" + titulo + ":")
+        imprimir_tabla(columnas, filas)
 
 
 def print_data(control, id):
@@ -172,7 +192,7 @@ def print_req_4(control):
 
     print()
     print("Tiempo de ejecución (ms):", round(resultado["tiempo"], 2))
-    print("Número total de marcas consideradas:", resultado["total_marcas"])
+    print("Número total de marcas consideradas:", resultado["marcas_en_filtro"])
 
     if resultado["total_marcas"] == 0:
         print("No hay órdenes que cumplan el filtro.")
@@ -210,7 +230,7 @@ def print_req_5(control):
     resultado = logic.req_5(control, pais, fecha_ini, fecha_fin, n)
 
     print("\nTiempo de ejecución (ms):", round(resultado["tiempo"], 2))
-    print("Número total de marcas consideradas:", resultado["total_marcas"])
+    print("Número total de marcas consideradas:", resultado["marcas_en_filtro"])
 
     if resultado["total_marcas"] == 0:
         print("No hay órdenes que cumplan el filtro.")

@@ -51,6 +51,40 @@ def load_data(catalog, filename):
         
     
 
+def resumen_carga(catalog):
+    """
+    Resumen que pide el reto tras la carga: venta con menor y mayor precio
+    final, y los primeros 5 y ultimos 5 registros cargados.
+    Menor precio final: si hay varias, la mas reciente.
+    Mayor precio final: si hay varias, la mas antigua.
+    """
+    ventas = catalog["lista_ventas"]
+    total = al.size(ventas)
+    menor = None
+    mayor = None
+    primeros_5 = al.new_list()
+    ultimos_5 = al.new_list()
+    if total > 0:
+        menor = al.get_element(ventas, 0)
+        mayor = al.get_element(ventas, 0)
+    for i in range(total):
+        venta = al.get_element(ventas, i)
+        if (venta["final_price_usd"] < menor["final_price_usd"]
+                or (venta["final_price_usd"] == menor["final_price_usd"]
+                    and venta["order_date"] > menor["order_date"])):
+            menor = venta
+        if (venta["final_price_usd"] > mayor["final_price_usd"]
+                or (venta["final_price_usd"] == mayor["final_price_usd"]
+                    and venta["order_date"] < mayor["order_date"])):
+            mayor = venta
+        if i < 5:
+            al.add_last(primeros_5, venta)
+        if i >= total - 5 and i >= 5:
+            al.add_last(ultimos_5, venta)
+    return {"total": total, "menor": menor, "mayor": mayor,
+            "primeros_5": primeros_5, "ultimos_5": ultimos_5}
+
+
 # Funciones de consulta sobre el catálogo
 
 
@@ -250,6 +284,7 @@ def req_4(catalog, fecha_min, fecha_max, n, nivel_economico):
     
     return {
         "tiempo":       diferencia_tiempo,
+        "marcas_en_filtro": mlp.size(mapa_marcas),
         "total_marcas": al.size(resultado),
         "marcas":       resultado,
     }
