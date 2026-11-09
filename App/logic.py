@@ -90,13 +90,18 @@ def resumen_carga(catalog):
 
 def indexar_venta_por_marca(catalog, venta):
     """
-    REQ 1: Inserta la venta en el RBT de su marca. La llave es la tupla
-    (discount_percent, order_date, order_id): el recorrido en orden del arbol
-    entrega descuento ascendente y, en empate, fecha ascendente. El order_id
-    hace la llave unica para que ninguna venta se sobrescriba.
+    REQ 1: Guarda la venta en el arbol de su marca.
+
+    Hay un arbol rojo-negro por marca, y todos viven en una tabla de hash
+    (llave = nombre de la marca). La llave del arbol es una tupla:
+    (descuento, fecha, order_id). El arbol ordena por el primer elemento y,
+    si hay empate, por el siguiente. Asi queda ordenado por descuento y,
+    con el mismo descuento, de la fecha mas antigua a la mas reciente.
+    El order_id va al final para que dos ventas nunca tengan la misma llave.
     """
     arbol = mlp.get(catalog["indice_marcas"], venta["brand"])
     if arbol is None:
+        # Primera venta de esta marca: se crea su arbol
         arbol = rbt.new_map()
         mlp.put(catalog["indice_marcas"], venta["brand"], arbol)
     llave = (venta["discount_percent"], venta["order_date"], venta["order_id"])
@@ -117,28 +122,77 @@ def indexar_venta_por_pais(catalog, venta):
     rbt.put(arbol, llave, venta)
 
 
+def recorrer_rango_req_1(nodo, llave_inicial, llave_final, lista_ordenes):
+    """
+    REQ 1 (recursiva): recorre el arbol en orden (izquierda, nodo, derecha)
+    y agrega a lista_ordenes las ventas cuya llave esta dentro del rango.
+    Retorna la suma del precio final de las ventas agregadas.
+
+    Caso base: si el nodo no existe, no hay nada que sumar.
+    Solo baja por un lado si en ese lado puede haber llaves del rango, asi
+    no recorre todo el arbol.
+    """
+    if nodo is None:
+        return 0
+
+    costo = 0
+
+    # Lado izquierdo: tiene llaves menores a la del nodo
+    if llave_inicial < nodo["key"]:
+        costo += recorrer_rango_req_1(nodo["left"], llave_inicial, llave_final, lista_ordenes)
+
+    # El nodo actual: se agrega si esta dentro del rango
+    if llave_inicial <= nodo["key"] and nodo["key"] <= llave_final:
+        sll.add_last(lista_ordenes, nodo["value"])
+        costo += nodo["value"]["final_price_usd"]
+
+    # Lado derecho: tiene llaves mayores a la del nodo
+    if nodo["key"] < llave_final:
+        costo += recorrer_rango_req_1(nodo["right"], llave_inicial, llave_final, lista_ordenes)
+
+    return costo
+
+
 def req_1(catalog, marca, desc_min, desc_max):
     """
-    Retorna el resultado del requerimiento 1: ordenes de una marca con
-    descuento en [desc_min, desc_max] (limites incluidos).
-    Retorna (tiempo_ms, total_ordenes, costo_total, lista_ordenada)
+    Retorna el resultado del requerimiento 1: las ordenes de una marca con
+    descuento entre desc_min y desc_max (los dos limites incluidos).
     """
-    inicio = get_time()
-    resultado = al.new_list()
-    total_costo = 0.0
+    tiempo_inicial = get_time()
+
+    # Paso 1: buscar el arbol de la marca (si la marca no existe da None)
     arbol = mlp.get(catalog["indice_marcas"], marca)
+
+    # Paso 2: recorrer el arbol (recursivamente) tomando solo el rango pedido.
+    # Las llaves son (descuento, fecha, order_id), asi que para incluir todas
+    # las fechas y ordenes de los descuentos limite se usa la fecha mas baja
+    # y la mas alta posibles. La lista queda ordenada por el recorrido en orden.
+    lista_ordenes = sll.new_list()
+    costo_total = 0
     if arbol is not None:
-        ordenes = rbt.values(arbol,
-                             (desc_min, "0000-00-00", ""),
-                             (desc_max, "9999-99-99", "~"))
-        nodo = ordenes["first"]
-        while nodo is not None:
-            venta = nodo["info"]
-            al.add_last(resultado, venta)
-            total_costo += venta["final_price_usd"]
-            nodo = nodo["next"]
-    fin = get_time()
-    return delta_time(inicio, fin), al.size(resultado), total_costo, resultado
+        llave_inicial = (desc_min, "0000-00-00", "")
+        llave_final = (desc_max, "9999-99-99", "~")
+        costo_total = recorrer_rango_req_1(arbol["root"], llave_inicial,
+                                           llave_final, lista_ordenes)
+    total = sll.size(lista_ordenes)
+
+    # Paso 3: si hay mas de 10 ordenes, solo se guardan 5 primeras y 5 ultimas
+    if total > 10:
+        primeros_5 = sll.sub_list(lista_ordenes, 0, 5)
+        ultimos_5 = sll.sub_list(lista_ordenes, total - 5, 5)
+    else:
+        primeros_5 = lista_ordenes
+        ultimos_5 = sll.new_list()
+
+    tiempo_final = get_time()
+
+    return {
+        "tiempo":            delta_time(tiempo_inicial, tiempo_final),
+        "total_num_pedidos": total,
+        "costo_total":       round(costo_total, 2),
+        "primeros_5":        primeros_5,
+        "ultimos_5":         ultimos_5,
+    }
 
 
 def req_2(catalog, pais, calif_min, calif_max):

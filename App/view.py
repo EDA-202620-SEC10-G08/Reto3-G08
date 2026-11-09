@@ -91,28 +91,34 @@ def print_req_1(control):
     """
         Función que imprime la solución del Requerimiento 1 en consola
     """
+    # Paso 1: pedir los datos al usuario
     marca = input("Marca a analizar (ej: Nike): ").strip()
     desc_min = int(input("Descuento mínimo (%): "))
     desc_max = int(input("Descuento máximo (%): "))
-    tiempo, total, costo, ordenes = logic.req_1(control, marca, desc_min, desc_max)
-    print("\nTiempo de ejecución (ms):", round(tiempo, 2))
-    print("Número total de órdenes:", total)
-    print("Costo total final (USD):", round(costo, 2))
-    if total == 0:
+
+    # Paso 2: llamar a la lógica
+    resultado = logic.req_1(control, marca, desc_min, desc_max)
+
+    # Paso 3: mostrar el resumen
+    print("\nTiempo de ejecución (ms):", round(resultado["tiempo"], 2))
+    print("Número total de órdenes:", resultado["total_num_pedidos"])
+    print("Costo total final (USD):", resultado["costo_total"])
+
+    if resultado["total_num_pedidos"] == 0:
         print("No hay órdenes que cumplan el filtro.")
     else:
-        if total > 10:
+        if resultado["total_num_pedidos"] > 10:
             print("Mostrando las primeras 5 y las últimas 5 órdenes:")
+
+        # Paso 4: armar las filas de la tabla (primeras 5 y últimas 5)
         filas = []
-        i = 0
-        while i < total:
-            if total <= 10 or i < 5 or i >= total - 5:
-                v = ordenes["elements"][i]
+        for lista in (resultado["primeros_5"], resultado["ultimos_5"]):
+            for i in range(sll.size(lista)):
+                v = sll.get_element(lista, i)
                 filas.append([v["order_id"], v["order_date"], v["brand"],
                               v["model_name"], v["category"], v["country"],
                               v["sales_channel"], v["discount_percent"],
                               v["final_price_usd"]])
-            i += 1
         imprimir_tabla(["order_id", "Fecha", "Marca", "Modelo", "Categoría",
                         "País", "Canal", "Descuento %", "Precio final USD"], filas)
 
