@@ -25,7 +25,8 @@ def new_logic():
 # Funciones para la carga de datos
 
 csv.field_size_limit(2147483647)
-data_dir = os.path.dirname(os.path.realpath('__file__')) + '/Data/'
+# La carpeta Data esta junto a la carpeta App, sin importar desde donde se ejecute
+data_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "Data") + os.sep
 
 def load_data(catalog, filename):
     """
