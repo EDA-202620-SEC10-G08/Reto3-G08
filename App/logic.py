@@ -195,12 +195,64 @@ def req_3(catalog, canal_venta, categoria, precio_min, precio_max):
 
 
 
-def req_4(catalog):
+def req_4(catalog, fecha_min, fecha_max, n, nivel_economico):
     """
     Retorna el resultado del requerimiento 4
     """
-    # TODO: Modificar el requerimiento 4
-    pass
+    
+    tiempo_inicial = get_time()
+    lista_ventas = catalog["lista_ventas"]
+    mapa_marcas = mlp.new_map(6,0.5)
+
+    for i in range(al.size(lista_ventas)):
+        venta = al.get_element(lista_ventas, i)
+        if venta["order_date"] >= fecha_min and venta["order_date"] <= fecha_max and venta["customer_income_level"] == nivel_economico:
+            marca = venta["brand"]
+            datos = mlp.get(mapa_marcas, marca)
+            if datos is None:
+                datos = {"marca": marca,
+                      "total": 0,
+                      "suma_precio": 0,
+                      "suma_revenue": 0,
+                      "mayor_orden": venta
+                }
+                mlp.put(mapa_marcas, marca, datos)
+            datos["total"] += 1
+            datos["suma_precio"] += venta["final_price_usd"]
+            datos["suma_revenue"] += venta["revenue_usd"]
+            
+            mayor = datos["mayor_orden"]
+
+            if venta["revenue_usd"] > mayor["revenue_usd"]:
+                datos["mayor_orden"] = venta
+            elif venta["revenue_usd"] == mayor["revenue_usd"] and venta["order_date"] > mayor["order_date"]:
+                datos["mayor_orden"] = venta
+    
+    cola = pq.new_heap(True)
+    lista_marcas = mlp.value_set(mapa_marcas)
+    for i in range (al.size(lista_marcas)):
+        datos = al.get_element(lista_marcas, i)
+        pq.insert(cola, (-datos["total"], datos["marca"]), datos)
+        
+    resultado = al.new_list()
+    
+    while al.size(resultado) < n and not pq.is_empty(cola):
+        datos = pq.remove(cola)
+        datos["precio_promedio"] = datos["suma_precio"] / datos["total"]
+        datos["revenue_promedio"] = datos["suma_revenue"] / datos["total"]
+        al.add_last(resultado, datos)
+    
+       
+    tiempo_final = get_time()
+    
+    diferencia_tiempo = delta_time(tiempo_inicial, tiempo_final)
+    
+    
+    return {
+        "tiempo":       diferencia_tiempo,
+        "total_marcas": al.size(resultado),
+        "marcas":       resultado,
+    }
 
 
 def req_5(catalog, pais, fecha_ini, fecha_fin, n):

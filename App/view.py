@@ -164,8 +164,39 @@ def print_req_4(control):
     """
         Función que imprime la solución del Requerimiento 4 en consola
     """
-    # TODO: Imprimir el resultado del requerimiento 4
-    pass
+    fecha_min = input("Fecha inicial AAAA-MM-DD: ").strip()
+    fecha_max = input("Fecha final AAAA-MM-DD: ").strip()
+    nivel_economico = input("Nivel de ingresos del cliente (Low, Medium o High): ").strip()
+    n = int(input("Cantidad N de marcas: "))
+    resultado = logic.req_4(control, fecha_min, fecha_max, n, nivel_economico)
+
+    print()
+    print("Tiempo de ejecución (ms):", round(resultado["tiempo"], 2))
+    print("Número total de marcas consideradas:", resultado["total_marcas"])
+
+    if resultado["total_marcas"] == 0:
+        print("No hay órdenes que cumplan el filtro.")
+    else:
+        filas_marcas = []
+        filas_ordenes = []
+        for i in range(al.size(resultado["marcas"])):
+            m = al.get_element(resultado["marcas"], i)
+            o = m["mayor_orden"]
+            filas_marcas.append([m["marca"], m["total"],
+                                 round(m["precio_promedio"], 2),
+                                 round(m["revenue_promedio"], 2)])
+            filas_ordenes.append([m["marca"], o["order_id"], o["order_date"],
+                                  o["brand"] + " " + o["model_name"],
+                                  o["country"], o["sales_channel"],
+                                  o["final_price_usd"], o["revenue_usd"]])
+        print()
+        print("Marcas con mayor número de órdenes:")
+        imprimir_tabla(["Marca", "Órdenes", "Precio final promedio USD",
+                        "Ingreso promedio USD"], filas_marcas)
+        print()
+        print("Orden con mayor ingreso generado de cada marca:")
+        imprimir_tabla(["Marca", "order_id", "Fecha", "Marca y modelo", "País",
+                        "Canal", "Precio final USD", "Ingreso USD"], filas_ordenes)
 
 
 def print_req_5(control):
